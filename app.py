@@ -7,26 +7,31 @@ import pandas as pd
 import os
 from dotenv import load_dotenv
 import datetime
+import json
 
 # Load environment variables
 load_dotenv(override=True)
 
 # Google Generative AI Configuration
-genai_api_key = os.getenv("GOOGLE_API_KEY") or st.secrets["GOOGLE_API_KEY"]
-SPREADSHEET_ID = os.getenv("SPREADSHEET_ID") or st.secrets["SPREADSHEET_ID"]
-MENULIST_SPREADSHEET_ID = os.getenv("MENULIST_SPREADSHEET_ID") or st.secrets["MENULIST_SPREADSHEET_ID"]
+genai_api_key = os.getenv("GOOGLE_API_KEY")  # No need for st.secrets
+SPREADSHEET_ID = os.getenv("SPREADSHEET_ID")
+MENULIST_SPREADSHEET_ID = os.getenv("MENULIST_SPREADSHEET_ID")
 
-# Google Sheets Credentials
-credentials_info = st.secrets["credentials"] if "credentials" in st.secrets else None
-print(credentials_info)
+credentials_info = os.getenv("SERVICE_ACCOUNT_FILE")  # Store JSON as env variable
+
 if credentials_info:
-    credentials = Credentials.from_service_account_info(credentials_info, scopes=["https://www.googleapis.com/auth/spreadsheets.readonly"])
+    credentials = Credentials.from_service_account_info(json.loads(credentials_info))
 else:
     service_account_file = os.getenv("SERVICE_ACCOUNT_FILE")
-    print(service_account_file)
-    credentials = Credentials.from_service_account_file(service_account_file, scopes=["https://www.googleapis.com/auth/spreadsheets.readonly"])
+    print("Service Account File Path:", service_account_file)
 
+    if service_account_file and os.path.exists(service_account_file):
+        credentials = Credentials.from_service_account_file(service_account_file)
+    else:
+        print("❌ ERROR: Service Account File Not Found")
+        credentials = None  # Handle missing credentials properly
 
+print("✅ Credentials Loaded Successfully:", bool(credentials)) 
 
 
 SCOPES = ['https://www.googleapis.com/auth/spreadsheets.readonly']
