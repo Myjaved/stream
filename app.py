@@ -13,25 +13,27 @@ import json
 load_dotenv(override=True)
 
 # Google Generative AI Configuration
-genai_api_key = os.getenv("GOOGLE_API_KEY")  # No need for st.secrets
-SPREADSHEET_ID = os.getenv("SPREADSHEET_ID")
-MENULIST_SPREADSHEET_ID = os.getenv("MENULIST_SPREADSHEET_ID")
+genai_api_key = st.secrets.get("GOOGLE_API_KEY") or os.getenv("GOOGLE_API_KEY")
+SPREADSHEET_ID = st.secrets.get("SPREADSHEET_ID") or os.getenv("SPREADSHEET_ID")
+MENULIST_SPREADSHEET_ID = st.secrets.get("MENULIST_SPREADSHEET_ID") or os.getenv("MENULIST_SPREADSHEET_ID")
 
-credentials_info = os.getenv("SERVICE_ACCOUNT_FILE")  # Store JSON as env variable
+# ✅ Fetching Google Service Account Credentials
+credentials_info = st.secrets.get("credentials")
 
 if credentials_info:
+    # If stored as a JSON string in Render Environment Variables
     credentials = Credentials.from_service_account_info(json.loads(credentials_info))
 else:
-    service_account_file = os.getenv("SERVICE_ACCOUNT_FILE")
-    print("Service Account File Path:", service_account_file)
-
-    if service_account_file and os.path.exists(service_account_file):
+    # If stored as a Secret File at /etc/secrets/credentials.json
+    service_account_file = os.getenv("SERVICE_ACCOUNT_FILE", "/etc/secrets/credentials.json")
+    
+    if os.path.exists(service_account_file):
         credentials = Credentials.from_service_account_file(service_account_file)
     else:
         print("❌ ERROR: Service Account File Not Found")
         credentials = None  # Handle missing credentials properly
 
-print("✅ Credentials Loaded Successfully:", bool(credentials)) 
+print("✅ Credentials Loaded Successfully:", bool(credentials))
 
 
 SCOPES = ['https://www.googleapis.com/auth/spreadsheets.readonly']
